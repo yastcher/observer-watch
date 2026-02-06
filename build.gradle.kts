@@ -6,18 +6,23 @@ plugins {
 android {
     compileSdkVersion(30)
     defaultConfig {
-        applicationId("com.example.app")
+        applicationId = "com.example.app"
         minSdkVersion(21)
         targetSdkVersion(30)
-        versionCode(1)
-        versionName("1.0")
+        versionCode = 1
+        versionName = "1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
 }
 
@@ -31,6 +36,10 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.9.0")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:3.11.2")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
+
     androidTestImplementation("androidx.test.ext:junit:1.1.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
 }
