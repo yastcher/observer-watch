@@ -1,4 +1,4 @@
-package com.example.app
+package com.observerwatch.domain.notification
 
 import android.util.Log
 import okhttp3.Call
@@ -12,20 +12,26 @@ import okhttp3.Response
 import java.io.File
 import java.io.IOException
 
-object NetworkService {
+class TelegramSender(
+    private val botToken: String,
+    private val apiBaseUrl: String = TELEGRAM_API_BASE
+) {
 
-    private const val TAG = "NetworkService"
-
-    // TODO: Replace with your actual server URL
-    const val SERVER_URL = "https://your-server.com/api/upload"
+    companion object {
+        private const val TAG = "TelegramSender"
+        private const val TELEGRAM_API_BASE = "https://api.telegram.org/bot"
+    }
 
     private val client = OkHttpClient()
 
-    fun sendImageToServer(url: String, imageFile: File) {
+    fun sendPhoto(chatId: String, imageFile: File) {
+        val url = "${apiBaseUrl}${botToken}/sendPhoto"
+
         val requestBody = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
+            .addFormDataPart("chat_id", chatId)
             .addFormDataPart(
-                "image",
+                "photo",
                 imageFile.name,
                 imageFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
             )
@@ -38,15 +44,16 @@ object NetworkService {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                Log.e(TAG, "Failed to send image: ${e.message}")
+                Log.e(TAG, "Failed to send photo to Telegram: ${e.message}")
             }
 
             override fun onResponse(call: Call, response: Response) {
                 response.use {
                     if (!it.isSuccessful) {
-                        Log.e(TAG, "Server returned error: ${it.code}")
+                        Log.e(TAG, "Telegram API error: ${it.code}")
                     } else {
-                        Log.d(TAG, "Image sent successfully")
+                        Log.d(TAG, "Photo sent to Telegram successfully")
+                        imageFile.delete()
                     }
                 }
             }

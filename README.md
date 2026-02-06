@@ -1,122 +1,79 @@
 # Observer Watch
 
-An Android application that continuously monitors the front-facing camera for faces and sends captured images to a remote server. Acts as an automated watchman for security and surveillance purposes.
+Android-приложение для автоматической детекции лиц через фронтальную камеру и отправки снимков в Telegram.
 
-## Features
+## Возможности
 
-- Real-time face detection using Google ML Kit (Play Services Vision)
-- Runs as a foreground service with a persistent notification
-- Captures and uploads images only when faces are detected
-- Asynchronous image upload via OkHttp
-- Automatic YUV-to-JPEG image conversion
+- Детекция лиц через ML Kit (standalone)
+- Фоновая работа как foreground service
+- Отправка фото в Telegram через Bot API
+- Throttling: не чаще одного уведомления в 30 секунд
+- Автоматическая конвертация YUV → JPEG
 
-## Architecture
+## Архитектура (DDD)
 
 ```
-MainActivity (Permission gate)
-    |
-CameraService (Foreground service)
-    ├── Camera2 API (Front camera capture)
-    ├── FaceDetectionService (ML Kit face detection)
-    └── NetworkService (OkHttp image upload)
-         |
-         Remote Server
+com.observerwatch/
+├── MainActivity.kt                   — Permission gate, запуск сервиса
+├── SettingsActivity.kt               — Ввод Telegram credentials
+├── config/
+│   └── AppConfig.kt                  — SharedPreferences (токен, chat ID, cooldown)
+├── domain/
+│   ├── camera/
+│   │   ├── CameraFrameSource.kt      — Camera2 API lifecycle
+│   │   └── ImageConverter.kt         — YUV → JPEG
+│   ├── detection/
+│   │   └── FaceDetector.kt           — ML Kit face detection
+│   └── notification/
+│       └── TelegramSender.kt         — Telegram Bot API (sendPhoto)
+└── service/
+    └── ObserverForegroundService.kt  — Foreground service, оркестрация
 ```
 
-| Component              | Responsibility                                     |
-|------------------------|----------------------------------------------------|
-| `MainActivity`         | Requests camera permission, starts the service     |
-| `CameraService`       | Manages camera lifecycle, foreground notification   |
-| `FaceDetectionService` | Detects faces in camera frames, converts images    |
-| `NetworkService`       | Uploads JPEG images to the server via HTTP POST    |
+## Настройка
 
-## Requirements
+### 1. Telegram Bot
 
-- Android SDK 21+ (Android 5.0 Lollipop)
-- Target SDK 30 (Android 11)
-- Device with a front-facing camera
-- Google Play Services (for ML Kit face detection)
+1. Создать бота через [@BotFather](https://t.me/BotFather)
+2. Получить токен бота
+3. Получить chat ID (отправить сообщение боту, затем проверить `https://api.telegram.org/bot<TOKEN>/getUpdates`)
 
-## Permissions
+### 2. Конфигурация
 
-| Permission             | Purpose                              |
-|------------------------|--------------------------------------|
-| `CAMERA`               | Access the front-facing camera       |
-| `INTERNET`             | Upload images to the remote server   |
-| `FOREGROUND_SERVICE`   | Run the monitoring service           |
+При первом запуске приложение откроет экран настроек, где нужно ввести Bot Token и Chat ID.
 
-## Setup
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/your-username/observer-watch.git
-cd observer-watch
-```
-
-### 2. Configure the server URL
-
-Edit `src/main/kotlin/com/example/app/NetworkService.kt` and replace the placeholder:
-
-```kotlin
-const val SERVER_URL = "https://your-server.com/api/upload"
-```
-
-The server should accept `multipart/form-data` POST requests with an `image` field containing a JPEG file.
-
-### 3. Build
+### 3. Сборка
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-### 4. Install
+### 4. Установка
 
 ```bash
 ./gradlew installDebug
 ```
 
-## Testing
-
-Run unit tests:
+## Тестирование
 
 ```bash
 ./gradlew test
 ```
 
-Tests cover:
-- `NetworkServiceTest` — HTTP request formation, multipart upload, error handling (uses MockWebServer)
-- `FaceDetectionServiceTest` — Detector initialization and resource cleanup
-- `MainActivityTest` — Component class verification
+## Требования
 
-## How It Works
+- Android 8.0+ (API 26)
+- Фронтальная камера
+- Доступ в интернет
 
-1. `MainActivity` checks for the `CAMERA` permission. If not granted, it requests it and exits if denied.
-2. Once permission is granted, it starts `CameraService` as a foreground service.
-3. `CameraService` opens the front-facing camera via Camera2 API and sets up a repeating capture session.
-4. Each frame is passed to `FaceDetectionService`, which converts YUV frames to bitmaps and runs face detection.
-5. When faces are detected, the frame is converted to a JPEG file and uploaded asynchronously via `NetworkService`.
+## Как это работает
 
-## Project Structure
-
-```
-observer-watch/
-├── build.gradle.kts
-├── src/
-│   ├── main/
-│   │   ├── AndroidManifest.xml
-│   │   └── kotlin/com/example/app/
-│   │       ├── MainActivity.kt
-│   │       ├── CameraService.kt
-│   │       ├── FaceDetectionService.kt
-│   │       └── NetworkService.kt
-│   └── test/
-│       └── kotlin/com/example/app/
-│           ├── MainActivityTest.kt
-│           ├── FaceDetectionServiceTest.kt
-│           └── NetworkServiceTest.kt
-└── README.md
-```
+1. `MainActivity` проверяет наличие Telegram credentials → если нет, открывает `SettingsActivity`
+2. Запрашивает разрешение на камеру, запускает `ObserverForegroundService`
+3. `CameraFrameSource` захватывает кадры через Camera2 API
+4. `FaceDetector` (ML Kit) анализирует каждый кадр
+5. При обнаружении лица `ImageConverter` создаёт JPEG
+6. `TelegramSender` отправляет фото в Telegram (не чаще раз в 30 сек)
 
 ## License
 

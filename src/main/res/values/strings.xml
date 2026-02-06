@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Observer Watch</string>
+    <string name="status_starting">Starting observer service…</string>
+    <string name="status_running">Monitoring active</string>
+    <string name="status_no_permission">Camera permission denied</string>
+    <string name="notification_channel_name">Observer Watch Service</string>
+    <string name="notification_channel_description">Face monitoring service notification</string>
+    <string name="notification_content_text">Monitoring for faces…</string>
+    <string name="settings_title">Telegram Settings</string>
+    <string name="hint_bot_token">Bot Token</string>
+    <string name="hint_chat_id">Chat ID</string>
+    <string name="save">Save</string>
+    <string name="bot_token_required">Bot Token is required</string>
+    <string name="chat_id_required">Chat ID is required</string>
+    <string name="stop_service">Stop</string>
+</resources>
