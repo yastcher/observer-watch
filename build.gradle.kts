@@ -3,6 +3,11 @@ plugins {
     kotlin("android") version "2.0.21"
 }
 
+repositories {
+    google()
+    mavenCentral()
+}
+
 android {
     namespace = "com.observerwatch"
     compileSdk = 35
@@ -32,6 +37,7 @@ android {
         jvmTarget = "17"
     }
 
+    @Suppress("UnstableApiUsage")
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
